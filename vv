@@ -1192,6 +1192,16 @@ deployment_config() {
 	$EDITOR "$path/Vagrantfile"
 }
 
+wordmove_push(){
+	cd "$path"
+	vagrant ssh -c "cd /srv/www/$site_to_push/htdocs && wordmove push -e viassh --all"
+}
+
+wordmove_pull(){
+	cd "$path"
+	vagrant ssh -c "echo asdfasdf && cd /srv/www/$site_to_pull/htdocs && wordmove pull -e viassh --all"
+}
+
 create_blueprints() {
 	if [[ ! -f "$path"/vv-blueprints.json ]]; then
 		curl -o "$path"/vv-blueprints.json -s https://raw.githubusercontent.com/bradp/vv/vv-install/vv-blueprints.json
@@ -1230,6 +1240,13 @@ parse_the_args() {
    	if [ ! -z "$force_update" ]; then
    		vv_bootstrap_update
 	fi
+	if [ ! -z "$wordmove_push" ]; then
+		wordmove_push
+	fi
+	if [ ! -z "$wordmove_pull" ]; then
+		wordmove_pull
+	fi
+
 }
 
 check_args() {
@@ -1446,6 +1463,16 @@ check_args() {
 			--wpskeleton|--skel,-skel)
 				wpskeleton="true"
 				shift
+				;;
+			-ps|--ps|ps|--push|-push|push)
+				wordmove_push="true"
+				site_to_push=$2
+				shift 2
+				;;
+			-pl|--pl|pl|--pull|-pull|pull)
+				wordmove_pull="true"
+				site_to_pull=$2
+				shift 2
 				;;
 			*)
 				fail "Unknown option $1"
