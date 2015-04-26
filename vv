@@ -514,6 +514,69 @@ site_creation_questions() {
 		fi
 	done
 
+	if [ -z "$remote_host" ]; then
+		if [ "$use_defaults" = "false" ]; then
+			prompt "remote_host?"
+			read -r remote_host
+		fi
+	fi
+
+	if [ -z "$remote_wordpress_path" ]; then
+		if [ "$use_defaults" = "false" ]; then
+			prompt "remote_wordpress_path?"
+			read -r remote_wordpress_path
+		fi
+	fi
+
+	if [ -z "$database_name" ]; then
+		if [ "$use_defaults" = "false" ]; then
+			prompt "database_name?"
+			read -r database_name
+		fi
+	fi
+
+	if [ -z "$database_user" ]; then
+		if [ "$use_defaults" = "false" ]; then
+			prompt "database_user?"
+			read -r database_user
+		fi
+	fi
+
+	if [ -z "$database_password" ]; then
+		if [ "$use_defaults" = "false" ]; then
+			prompt "database_password?"
+			read -r database_password
+		fi
+	fi
+
+	if [ -z "$database_host" ]; then
+		if [ "$use_defaults" = "false" ]; then
+			prompt "database_host?"
+			read -r database_host
+		fi
+	fi
+
+	if [ -z "$ssh_host" ]; then
+		if [ "$use_defaults" = "false" ]; then
+			prompt "ssh_host?"
+			read -r ssh_host
+		fi
+	fi
+
+	if [ -z "$ssh_user" ]; then
+		if [ "$use_defaults" = "false" ]; then
+			prompt "ssh_user?"
+			read -r ssh_user
+		fi
+	fi
+
+	if [ -z "$ssh_password" ]; then
+		if [ "$use_defaults" = "false" ]; then
+			prompt "ssh_password?"
+			read -r ssh_password
+		fi
+	fi
+
 	if [ "$no_wp" = "false" ]; then
 		if [ ! -z "$version" ]; then
 			# Attempt to verify the existence of the version (hacky)
@@ -815,6 +878,68 @@ PHP"
 		rm "$site".conf
 		mv tmp.conf "$site".conf
 	fi
+
+	movefilepath="$path"/"$sites_folder"/"$site"/htdocs/Movefile
+	mkdir "$path"/"$sites_folder"/"$site"/htdocs
+
+cat <<EOF > $movefilepath
+local:
+  vhost: "http://$site.dev" #no trailing slashes!
+  wordpress_path: "/srv/www/$site/htdocs" #absolute page in vagrant env
+
+  database:
+    name: "$site"
+    user: "root"
+    password: "root"
+    host: "127.0.0.1"
+
+# Call this pull/push method like this
+# wordmove pull -e viassh --all
+# wordmove push -e viassh --all
+viassh:
+  vhost: "$remote_host" # no trailing slashes!
+  wordpress_path: "$remote_wordpress_path" # use an absolute path here
+
+  database:
+    name: "$database_name"
+    user: "$database_user"
+    password: "$database_password"
+    host: "$database_host"
+    # port: "3308" # Use just in case you have exotic server config
+
+  exclude:
+    - ".git/"
+    - ".gitignore"
+    - ".sass-cache/"
+    - "bin/"
+    - "tmp/*"
+    - "Gemfile*"
+    - "Movefile"
+    - "wp-config.php"
+    - "wp-content/*.sql"
+
+  paths: # you can customize wordpress internal paths
+  #   wp_content: "wp-content"
+  #   uploads: "wp-content/uploads"
+  #   plugins: "wp-content/plugins"
+  #   themes: "wp-content/themes"
+  #   languages: "wp-content/languages"
+  #   themes: "wp-content/themes"
+
+  ssh:
+    host: "$ssh_host"
+    user: "$ssh_user"
+    password: "$ssh_password" # password is optional, will use public keys if available.
+    # port: 22 # Port is optional
+    rsync_options: "--rsync-path=bin/rsync" # Additional rsync options, optional
+    # rsync_options: "--verbose" # Additional rsync options, optional
+    # gateway: # Gateway is optional
+    #   host: "host"
+    #   user: "user"
+    #   password: "password" # password is optional, will use public keys if available.
+
+EOF
+
 
 	echo "Done"
 }
